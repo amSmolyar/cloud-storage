@@ -1,0 +1,130 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/pro/liquibase-pro-4.3.xsd">
+
+    <changeSet id="1.0.1" author="amSmolyar">
+        <createTable tableName="users">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" />
+            </column>
+            <column name="username" type="varchar(100)">
+                <constraints nullable="false" unique="true" />
+            </column>
+            <column name="first_name" type="varchar(100)">
+                <constraints nullable="false" />
+            </column>
+            <column name="last_name" type="varchar(100)">
+                <constraints nullable="false" />
+            </column>
+            <column name="email" type="varchar(255)">
+                <constraints nullable="false" unique="true" />
+            </column>
+            <column name="password" type="varchar(100)">
+                <constraints nullable="false" />
+            </column>
+            <column name="created" type="timestamp" defaultValue="current_timestamp()">
+                <constraints nullable="false" />
+            </column>
+            <column name="updated" type="timestamp" defaultValue="current_timestamp()">
+                <constraints nullable="false" />
+            </column>
+            <column name="status" type="varchar(25)" defaultValue="ACTIVE">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="1.0.2" author="amSmolyar">
+        <createTable tableName="files">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" />
+            </column>
+            <column name="file_name" type="varchar(255)">
+                <constraints nullable="false" />
+            </column>
+            <column name="hash" type="varchar(255)">
+                <constraints nullable="false" />
+            </column>
+            <column name="body" type="varchar(255)">
+                <constraints nullable="false" />
+            </column>
+            <column name="file_size" type="int(1000)">
+                <constraints nullable="false" />
+            </column>
+            <column name="user_id" type="bigint">
+                <constraints nullable="false" />
+            </column>
+            <column name="created" type="timestamp" defaultValue="current_timestamp()">
+                <constraints nullable="false" />
+            </column>
+            <column name="updated" type="timestamp" defaultValue="current_timestamp()">
+                <constraints nullable="false" />
+            </column>
+            <column name="status" type="varchar(25)" defaultValue="ACTIVE">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="1.0.3" author="amSmolyar">
+        <addForeignKeyConstraint baseTableName="files" baseColumnNames="user_id"
+                                 referencedTableName="users" referencedColumnNames="id"
+                                 constraintName="files_user_fk"/>
+    </changeSet>
+
+    <changeSet id="1.0.4" author="amSmolyar">
+        <insert tableName="users">
+            <column name="username" value="user1"/>
+            <column name="first_name" value="Evgeniy"/>
+            <column name="last_name" value="Smirnov"/>
+            <column name="email" value="evgenius@gmail.com"/>
+            <column name="password" value="$2a$12$hp1HdsrJAuBENuaQ5nNJtulZeltutukEv78V.CJ.uiySnGAR/qLIO"/>
+        </insert>
+
+        <insert tableName="users">
+            <column name="username" value="user2"/>
+            <column name="first_name" value="Pavel"/>
+            <column name="last_name" value="Petrov"/>
+            <column name="email" value="pavlik@gmail.com"/>
+            <column name="password" value="$2a$12$HBGUU5RafybTglCV5/L.q.vOLFf7HZ/sOlE.T4K0Rna.pqA/.GFTG"/>
+        </insert>
+
+        <insert tableName="users">
+            <column name="username" value="user3"/>
+            <column name="first_name" value="Olga"/>
+            <column name="last_name" value="Alexeeva"/>
+            <column name="email" value="olechka@mail.ru"/>
+            <column name="password" value="$2a$12$eAqQFKG/407qe.SkGV3V6eU.PCsjuLn93cGPZnSF9CsB6cNjd58kO"/>
+        </insert>
+
+        <insert tableName="users">
+            <column name="username" value="user4"/>
+            <column name="first_name" value="Mihail"/>
+            <column name="last_name" value="Ivanov"/>
+            <column name="email" value="mishka@yandex.ru"/>
+            <column name="password" value="$2a$12$fdRcjDYe2GcrXmsMkDPbMukOUYX0ed3IqIGnREkycRrPQd8b8k9cW"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="1.0.5" author="amSmolyar">
+        <insert tableName="files">
+            <column name="file_name" value="hello.txt"/>
+            <column name="file_size" value="6"/>
+            <column name="hash" value="tagearhtrsrhtraggr"/>
+            <column name="body" value="010010000110010101101100011011000110111100100001"/>
+            <column name="user_id" value="1"/>
+        </insert>
+
+        <insert tableName="files">
+            <column name="file_name" value="hello.txt"/>
+            <column name="file_size" value="6"/>
+            <column name="hash" value="tagearhtrsrhtraggr"/>
+            <column name="body" value="010010000110010101101100011011000110111100100001"/>
+            <column name="user_id" value="3"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>
