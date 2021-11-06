@@ -1,5 +1,6 @@
 package ru.netology.diploma.security;
 
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -15,6 +16,7 @@ import ru.netology.diploma.service.UserService;
 public class JwtUserDetailService implements UserDetailsService {
     private final UserService userService;
 
+    @Autowired
     public JwtUserDetailService(@Qualifier("userServiceImpl") UserService userService) {
         this.userService = userService;
     }
@@ -29,4 +31,5 @@ public class JwtUserDetailService implements UserDetailsService {
         JwtUser jwtUser = JwtUserFactory.create(user);
         return jwtUser;
     }
+
 }

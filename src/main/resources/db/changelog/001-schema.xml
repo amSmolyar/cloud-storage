@@ -77,6 +77,17 @@
     </changeSet>
 
     <changeSet id="1.0.4" author="amSmolyar">
+        <createTable tableName="jwtblacklist">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" />
+            </column>
+            <column name="token" type="varchar(255)">
+                <constraints unique="true" />
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="1.0.5" author="amSmolyar">
         <insert tableName="users">
             <column name="username" value="user1"/>
             <column name="first_name" value="Evgeniy"/>
@@ -110,7 +121,7 @@
         </insert>
     </changeSet>
 
-    <changeSet id="1.0.5" author="amSmolyar">
+    <changeSet id="1.0.6" author="amSmolyar">
         <insert tableName="files">
             <column name="file_name" value="hello.txt"/>
             <column name="file_size" value="6"/>

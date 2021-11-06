@@ -1,5 +1,6 @@
 package ru.netology.diploma.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,6 +17,7 @@ import ru.netology.diploma.security.jwt.JwtConfigurer;
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private final JwtConfigurer jwtConfigurer;
 
+    @Autowired
     public SecurityConfig(@Qualifier("jwtConfigurer") JwtConfigurer jwtConfigurer) {
         this.jwtConfigurer = jwtConfigurer;
     }
@@ -41,7 +43,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .authorizeRequests().antMatchers("/cloud/login").permitAll()
                 .and()
-                .authorizeRequests().antMatchers("/cloud/logout").hasRole("ADMIN")
+                .authorizeRequests().antMatchers("/cloud/logout").permitAll()
                 .and()
                 .authorizeRequests().antMatchers("/cloud/file").hasRole("ADMIN")
                 .and()

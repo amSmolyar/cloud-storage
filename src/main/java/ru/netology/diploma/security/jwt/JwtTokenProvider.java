@@ -1,6 +1,8 @@
 package ru.netology.diploma.security.jwt;
 
 import io.jsonwebtoken.*;
+import org.hibernate.engine.jdbc.spi.SqlExceptionHelper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -8,6 +10,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
+import ru.netology.diploma.security.jwt.service.JwtBlackListService;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
@@ -26,10 +29,14 @@ public class JwtTokenProvider {
     @Value("${jwt.token.header}")
     private String tokenHeader;
 
+    private final JwtBlackListService jwtBlackListService;
+
     private final UserDetailsService userDetailsService;
 
-    public JwtTokenProvider(@Qualifier("jwtUserDetailService") UserDetailsService userDetailsService) {
+    @Autowired
+    public JwtTokenProvider(@Qualifier("jwtUserDetailService") UserDetailsService userDetailsService, @Qualifier("jwtBlackListServiceImpl") JwtBlackListService jwtBlackListService) {
         this.userDetailsService = userDetailsService;
+        this.jwtBlackListService = jwtBlackListService;
     }
 
     @PostConstruct
@@ -43,12 +50,14 @@ public class JwtTokenProvider {
         Date now = new Date();
         Date validity = new Date(now.getTime() + validInMilliseconds);
 
-        return Jwts.builder()
+        String token = Jwts.builder()
                 .setClaims(claims)
                 .setIssuedAt(now)
                 .setExpiration(validity)
                 .signWith(SignatureAlgorithm.HS256, secret) //
                 .compact();
+
+        return token;
     }
 
     public Authentication getAuthentication(String token) {
@@ -66,10 +75,20 @@ public class JwtTokenProvider {
 
     public boolean isTokenValid(String token) {
         try {
+            if (jwtBlackListService.findByTokenEquals(token) != null)
+                return false;
+
             Jws<Claims> claims = Jwts.parser().setSigningKey(secret).parseClaimsJws(token);
             return !claims.getBody().getExpiration().before(new Date());
+
         } catch (JwtException | IllegalArgumentException e) {
+            //return false;
             throw new JwtAuthenticationException("JWT token is not valid");
         }
+    }
+
+    public void addTokenToBlackList(String token) {
+        if (jwtBlackListService.findByTokenEquals(token) == null)
+            jwtBlackListService.save(token);
     }
 }

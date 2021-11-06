@@ -1,7 +1,6 @@
 package ru.netology.diploma.service;
 
 import ru.netology.diploma.dao.StorageFile;
-import ru.netology.diploma.dao.User;
 
 import java.util.List;
 

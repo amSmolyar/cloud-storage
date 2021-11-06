@@ -3,6 +3,7 @@ package ru.netology.diploma.controller;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.netology.diploma.dto.ExceptionResponseDto;
@@ -16,19 +17,19 @@ public class ExceptionControllerAdvice {
     @ExceptionHandler(JwtAuthenticationException.class)
     public ResponseEntity<ExceptionResponseDto> handlerJwtAuthentication(JwtAuthenticationException e) {
         ExceptionResponseDto resp = new ExceptionResponseDto(e.getMessage(), e.getId());
-        return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(resp, HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ExceptionResponseDto> handlerAuthentication(AuthenticationException e) {
         ExceptionResponseDto resp = new ExceptionResponseDto(e.getMessage(), AUTHENTICATION_EXCEPTION_ID);
-        return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(resp, HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ExceptionResponseDto> handlerJRuntimeException(RuntimeException e) {
         ExceptionResponseDto resp = new ExceptionResponseDto(e.getMessage(), RUNTIME_EXCEPTION_ID);
-        return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(resp, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
 
