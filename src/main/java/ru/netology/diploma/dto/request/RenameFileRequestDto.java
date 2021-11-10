@@ -8,7 +8,7 @@ import javax.validation.constraints.Pattern;
 @Data
 public class RenameFileRequestDto {
 
-    @Pattern(regexp = "[a-zA-Z0-9._ -]+\\.\\w+$")
+    @Pattern(regexp = ".+\\.\\w+$")
     private String filename;
 
     @JsonCreator

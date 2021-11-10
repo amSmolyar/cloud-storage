@@ -79,7 +79,7 @@ public class CloudDBServiceImpl implements CloudDBService {
         User user = findUserByUsername(username);
         int fileSize = (int) file.getSize();
         StorageFile fileUpload = new StorageFile(filename, fileSize, user);
-        fileUpload.setId(fileRepository.findMaxId() + 1);
+        fileUpload.setId(0L);
         fileUpload.setCreated((new Date()));
         fileUpload.setUpdated((new Date()));
         fileUpload.setStatus(Status.ACTIVE);
