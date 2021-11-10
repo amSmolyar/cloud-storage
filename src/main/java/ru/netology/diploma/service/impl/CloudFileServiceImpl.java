@@ -4,11 +4,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import ru.netology.diploma.pojo.exceptions.FileDeleteException;
-import ru.netology.diploma.pojo.exceptions.FileDownloadException;
-import ru.netology.diploma.pojo.exceptions.FileRewriteException;
-import ru.netology.diploma.pojo.exceptions.FileUploadException;
-import ru.netology.diploma.service.FileUploadDownloadService;
+import ru.netology.diploma.pojo.exceptions.*;
+import ru.netology.diploma.service.CloudFileService;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -16,32 +13,31 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @Service
-public class FileUploadDownloadServiceImpl implements FileUploadDownloadService {
+public class CloudFileServiceImpl implements CloudFileService {
 
     @Value("${storage.upload.path}")
     private String uploadPath;
 
     @Override
     public void uploadFile(MultipartFile file, String username, String filename) throws FileUploadException {
-        if (file != null && !file.getOriginalFilename().isEmpty()) {
-            File uploadDir = new File(uploadPath + "/" + username);
+        File uploadDir = new File(uploadPath + "/" + username);
 
-            if (!uploadDir.exists())
-                uploadDir.mkdirs();
+        if (!uploadDir.exists())
+            uploadDir.mkdirs();
 
-            Path dir = Paths.get(uploadPath + "/" + username);
-            Path filepath = Paths.get(dir.toString(), file.getOriginalFilename());
+        Path dir = Paths.get(uploadPath + "/" + username);
+        Path filepath = Paths.get(dir.toString(), file.getOriginalFilename());
 
-            try {
-                file.transferTo(filepath);
-            } catch (IOException | IllegalStateException e) {
-                throw new FileUploadException("Can't upload file " + filename);
-            }
+        try {
+            file.transferTo(filepath);
+        } catch (IOException | IllegalStateException e) {
+            throw new FileUploadException("Can't upload file " + filename);
         }
     }
 
     @Override
-    public MultipartFile downloadFile(String username, String filename) throws FileNotFoundException, FileDownloadException {
+    public MultipartFile downloadFile(String username, String filename) throws InputDataException, FileNotFoundException, FileDownloadException {
+
         Path path = Paths.get(uploadPath + "/" + username + "/" + filename);
 
         if (!Files.exists(path))

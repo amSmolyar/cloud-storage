@@ -1,15 +1,14 @@
 package ru.netology.diploma.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 
 @Data
 public class RenameFileRequestDto {
 
-    @NotNull
+    @Pattern(regexp = "[a-zA-Z0-9._ -]+\\.\\w+$")
     private String filename;
 
     @JsonCreator

@@ -7,7 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 
-public interface FileUploadDownloadService {
+public interface CloudFileService {
     void uploadFile(MultipartFile file, String username, String filename) throws FileUploadException;
     MultipartFile downloadFile(String username, String filename) throws FileNotFoundException, FileDownloadException;
     void renameFile(String username, String filename, String newFilename) throws FileNotFoundException, FileRewriteException;

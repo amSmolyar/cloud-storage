@@ -8,62 +8,52 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import ru.netology.diploma.dao.StorageFile;
 import ru.netology.diploma.dto.response.FileFromListResponseDto;
 import ru.netology.diploma.dto.request.RenameFileRequestDto;
-import ru.netology.diploma.pojo.exceptions.FileDownloadException;
-import ru.netology.diploma.pojo.exceptions.FileUploadException;
-import ru.netology.diploma.pojo.exceptions.FileRewriteException;
-import ru.netology.diploma.pojo.exceptions.InputDataException;
+import ru.netology.diploma.pojo.exceptions.*;
 import ru.netology.diploma.security.jwt.JwtTokenProvider;
-import ru.netology.diploma.service.CloudDBService;
-import ru.netology.diploma.service.FileUploadDownloadService;
+import ru.netology.diploma.service.CloudStorageService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.io.*;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 public class CloudController {
     private final JwtTokenProvider jwtTokenProvider;
-    private final CloudDBService cloudDBService;
-    private final FileUploadDownloadService fileUploadDownloadService;
+    private final CloudStorageService cloudStorageService;
 
     @Autowired
-    public CloudController(JwtTokenProvider jwtTokenProvider, CloudDBService cloudDBService, FileUploadDownloadService fileUploadDownloadService) {
+    public CloudController(JwtTokenProvider jwtTokenProvider, CloudStorageService cloudStorageService) {
         this.jwtTokenProvider = jwtTokenProvider;
-        this.cloudDBService = cloudDBService;
-        this.fileUploadDownloadService = fileUploadDownloadService;
+        this.cloudStorageService = cloudStorageService;
     }
 
     @PostMapping("/file")
     public ResponseEntity<?> uploadFile(
             HttpServletRequest request,
             @RequestParam("filename") String filename,
-            @RequestParam("file") MultipartFile file) throws FileUploadException, FileRewriteException {
+            @RequestParam("file") MultipartFile file) throws InputDataException, FileUploadException, FileRewriteException {
+
+        cloudStorageService.inputDataValidation(file);
+        cloudStorageService.inputDataValidation(filename);
 
         String username = jwtTokenProvider.getUsername(jwtTokenProvider.resolveToken(request));
+        cloudStorageService.uploadFile(username, filename, file);
 
-        if (cloudDBService.getCurrentFile(username, filename) != null)
-            throw new FileRewriteException("File with name " + filename + " already exists");
-
-        fileUploadDownloadService.uploadFile(file, username, filename);
-        cloudDBService.uploadFileToUserStorage(username, filename, file);
         return ResponseEntity.ok(HttpStatus.OK);
     }
 
     @GetMapping("/file")
-    public ResponseEntity downloadFile(
+    public ResponseEntity<?> downloadFile(
             HttpServletRequest request,
-            @RequestParam("filename") String filename) throws IOException, FileDownloadException {
+            @RequestParam("filename") String filename) throws IOException, InputDataException, FileDownloadException {
+
+        cloudStorageService.inputDataValidation(filename);
 
         String username = jwtTokenProvider.getUsername(jwtTokenProvider.resolveToken(request));
-        if (cloudDBService.getCurrentFile(username, filename) == null)
-            throw new FileNotFoundException("File with name " + filename + " does not exist in your storage");
-
-        MultipartFile multipartFile = fileUploadDownloadService.downloadFile(username, filename);
+        MultipartFile multipartFile = cloudStorageService.downloadFile(username, filename);
 
         byte[] body = multipartFile.getBytes();
 
@@ -86,11 +76,14 @@ public class CloudController {
     @DeleteMapping("/file")
     public ResponseEntity<?> deleteFile(
             HttpServletRequest request,
-            @RequestParam("filename") String filename) throws InputDataException, IOException {
+            @RequestParam("filename") String filename) throws InputDataException, FileNotFoundException, FileDeleteException {
+
+        cloudStorageService.inputDataValidation(filename);
 
         String username = jwtTokenProvider.getUsername(jwtTokenProvider.resolveToken(request));
-        cloudDBService.deleteFileByUsernameAndFilename(username, filename);
-        fileUploadDownloadService.deleteFile(username, filename);
+        cloudStorageService.deleteFile(username, filename);
+
+
         return ResponseEntity.ok(HttpStatus.OK);
     }
 
@@ -98,11 +91,12 @@ public class CloudController {
     public ResponseEntity<?> renameFile(
             HttpServletRequest request,
             @RequestParam("filename") String filename,
-            @Valid @RequestBody RenameFileRequestDto newFilename) throws FileRewriteException {
+            @Valid @RequestBody RenameFileRequestDto newFilename) throws InputDataException, FileNotFoundException, FileRewriteException {
+
+        cloudStorageService.inputDataValidation(filename);
 
         String username = jwtTokenProvider.getUsername(jwtTokenProvider.resolveToken(request));
-        cloudDBService.renameFile(username, filename, newFilename.getFilename());
-        fileUploadDownloadService.renameFile(username, filename, newFilename.getFilename());
+        cloudStorageService.renameFile(username, filename, newFilename.getFilename());
 
         return ResponseEntity.ok(HttpStatus.OK);
     }
@@ -112,10 +106,7 @@ public class CloudController {
             HttpServletRequest request,
             @RequestParam("limit") int limit) {
         String username = jwtTokenProvider.getUsername(jwtTokenProvider.resolveToken(request));
-        List<FileFromListResponseDto> filesFromList = cloudDBService.getLimitFilesByUsername(username, limit)
-                .stream()
-                .map((StorageFile storageFile) -> new FileFromListResponseDto(storageFile.getFilename(), storageFile.getFileSize()))
-                .collect(Collectors.toList());
+        List<FileFromListResponseDto> filesFromList = cloudStorageService.getLimitFileList(username, limit);
 
         return ResponseEntity.ok(filesFromList);
     }

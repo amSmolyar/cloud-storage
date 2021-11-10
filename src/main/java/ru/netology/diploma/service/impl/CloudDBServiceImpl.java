@@ -27,22 +27,13 @@ public class CloudDBServiceImpl implements CloudDBService {
         this.fileRepository = fileRepository;
     }
 
-    @Override
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
-    }
 
     @Override
-    public User findUserByUsername(String username) {
+    public User findUserByUsername(String username) throws InputDataException {
         return userRepository.findUserByUsername(username)
                 .orElseThrow(() -> new InputDataException("User with username " + username + " not found"));
     }
 
-    @Override
-    public User findUserById(Long id) {
-        return userRepository.findUserById(id)
-                .orElseThrow(() -> new InputDataException("User with id " + id + " not found"));
-    }
 
     @Override
     public StorageFile getCurrentFile(String username, String filename) {
@@ -72,7 +63,7 @@ public class CloudDBServiceImpl implements CloudDBService {
     }
 
     @Override
-    public List<StorageFile> getLimitFilesByUsername(String username, int limit) {
+    public List<StorageFile> getLimitFilesByUsername(String username, int limit) throws InputDataException {
         if (limit < 0)
             throw new InputDataException("Limit must be positive");
 
@@ -97,7 +88,7 @@ public class CloudDBServiceImpl implements CloudDBService {
 
 
     @Override
-    public void deleteFileByUsernameAndFilename(String username, String filename) {
+    public void deleteFileByUsernameAndFilename(String username, String filename) throws InputDataException {
         StorageFile file = getCurrentFile(username, filename);
         if (file == null)
             throw new InputDataException("File with name " + filename + " does not exist in storage");
@@ -108,7 +99,7 @@ public class CloudDBServiceImpl implements CloudDBService {
     }
 
     @Override
-    public void renameFile(String username, String filename, String newFilename) {
+    public void renameFile(String username, String filename, String newFilename) throws InputDataException {
         StorageFile file = getCurrentFile(username, filename);
         if (file == null)
             throw new InputDataException("File with name " + filename + " does not exist in storage");
