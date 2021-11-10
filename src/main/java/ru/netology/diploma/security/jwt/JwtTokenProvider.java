@@ -1,7 +1,6 @@
 package ru.netology.diploma.security.jwt;
 
 import io.jsonwebtoken.*;
-import org.hibernate.engine.jdbc.spi.SqlExceptionHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,14 +49,12 @@ public class JwtTokenProvider {
         Date now = new Date();
         Date validity = new Date(now.getTime() + validInMilliseconds);
 
-        String token = Jwts.builder()
+        return Jwts.builder()
                 .setClaims(claims)
                 .setIssuedAt(now)
                 .setExpiration(validity)
                 .signWith(SignatureAlgorithm.HS256, secret) //
                 .compact();
-
-        return token;
     }
 
     public Authentication getAuthentication(String token) {
@@ -70,25 +67,28 @@ public class JwtTokenProvider {
     }
 
     public String resolveToken(HttpServletRequest request) {
-        return request.getHeader(tokenHeader);
+        String bearerToken = request.getHeader(tokenHeader);
+        if (bearerToken != null && bearerToken.startsWith("Bearer")){
+            return bearerToken.substring(7);
+        }
+        return null;
     }
 
-    public boolean isTokenValid(String token) {
+    public boolean isTokenValid(String token) throws JwtAuthenticationException {
         try {
-            if (jwtBlackListService.findByTokenEquals(token) != null)
+            if (jwtBlackListService.findByToken(token) != null)
                 return false;
 
             Jws<Claims> claims = Jwts.parser().setSigningKey(secret).parseClaimsJws(token);
             return !claims.getBody().getExpiration().before(new Date());
 
         } catch (JwtException | IllegalArgumentException e) {
-            //return false;
             throw new JwtAuthenticationException("JWT token is not valid");
         }
     }
 
     public void addTokenToBlackList(String token) {
-        if (jwtBlackListService.findByTokenEquals(token) == null)
+        if (jwtBlackListService.findByToken(token) == null)
             jwtBlackListService.save(token);
     }
 }

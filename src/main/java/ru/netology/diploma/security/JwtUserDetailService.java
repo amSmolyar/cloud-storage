@@ -17,13 +17,13 @@ public class JwtUserDetailService implements UserDetailsService {
     private final UserService userService;
 
     @Autowired
-    public JwtUserDetailService(@Qualifier("userServiceImpl") UserService userService) {
+    public JwtUserDetailService(@Qualifier("cloudDBServiceImpl") UserService userService) {
         this.userService = userService;
     }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userService.findByUsername(username);
+        User user = userService.findUserByUsername(username);
 
         if (user == null)
             throw new UsernameNotFoundException("User with username " + username + " not found");

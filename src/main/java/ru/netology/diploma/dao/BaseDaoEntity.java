@@ -1,6 +1,7 @@
 package ru.netology.diploma.dao;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
@@ -9,6 +10,7 @@ import java.util.Date;
 
 @MappedSuperclass
 @Data
+@NoArgsConstructor
 public class BaseDaoEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,4 +27,5 @@ public class BaseDaoEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private Status status;
+
 }

@@ -17,7 +17,6 @@ public final class JwtUserFactory {
                 user.getFirstName(),
                 user.getLastName(),
                 user.getPassword(),
-                user.getEmail(),
                 user.getStatus().equals(Status.ACTIVE),
                 user.getUpdated(),
                 List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));

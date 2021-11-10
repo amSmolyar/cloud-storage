@@ -6,43 +6,36 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import ru.netology.diploma.dao.User;
-import ru.netology.diploma.dto.AuthenticationRequestDto;
-import ru.netology.diploma.dto.AuthenticationResponseDto;
+import org.springframework.web.bind.annotation.*;
+import ru.netology.diploma.dto.request.AuthenticationRequestDto;
+import ru.netology.diploma.dto.response.AuthenticationResponseDto;
 import ru.netology.diploma.security.jwt.JwtTokenProvider;
-import ru.netology.diploma.service.UserService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
+
 
 @RestController
-@RequestMapping("/cloud")
 public class AuthenticationController {
-    private AuthenticationManager authenticationManager;
-    private JwtTokenProvider jwtTokenProvider;
-    private UserService userService;
+    private final AuthenticationManager authenticationManager;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Autowired
-    public AuthenticationController(AuthenticationManager authenticationManager, JwtTokenProvider jwtTokenProvider, UserService userService) {
+    public AuthenticationController(AuthenticationManager authenticationManager, JwtTokenProvider jwtTokenProvider) {
         this.authenticationManager = authenticationManager;
         this.jwtTokenProvider = jwtTokenProvider;
-        this.userService = userService;
     }
 
+
+    @CrossOrigin
     @PostMapping("/login")
-    public ResponseEntity<AuthenticationResponseDto> login(@RequestBody AuthenticationRequestDto authenticationRequest) {
+    public ResponseEntity<AuthenticationResponseDto> login(@Valid @RequestBody AuthenticationRequestDto authenticationRequest) {
         try {
             String username = authenticationRequest.getLogin();
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, authenticationRequest.getPassword()));
-
-            User user = userService.findByUsername(username);
             String token = jwtTokenProvider.createToken(username);
 
             return ResponseEntity.ok(new AuthenticationResponseDto(token));
@@ -51,6 +44,8 @@ public class AuthenticationController {
         }
     }
 
+
+    @CrossOrigin
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
         String token = jwtTokenProvider.resolveToken(request);

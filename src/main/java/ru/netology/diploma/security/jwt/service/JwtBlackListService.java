@@ -4,6 +4,7 @@ import ru.netology.diploma.security.jwt.dao.JwtBlackList;
 
 
 public interface JwtBlackListService {
-    JwtBlackList findByTokenEquals(String token);
+    JwtBlackList findByToken(String token);
+    boolean findByTokenEquals(String token);
     JwtBlackList save(String token);
 }

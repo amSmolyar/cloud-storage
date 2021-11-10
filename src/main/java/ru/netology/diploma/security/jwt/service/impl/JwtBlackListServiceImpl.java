@@ -17,8 +17,13 @@ public class JwtBlackListServiceImpl implements JwtBlackListService {
     }
 
     @Override
-    public JwtBlackList findByTokenEquals(String token) {
+    public boolean findByTokenEquals(String token) {
         return jwtBlackListRepository.findByTokenEquals(token);
+    }
+
+    @Override
+    public JwtBlackList findByToken(String token) {
+        return jwtBlackListRepository.findByToken(token);
     }
 
     @Override

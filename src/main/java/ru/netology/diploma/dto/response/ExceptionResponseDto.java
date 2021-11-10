@@ -1,4 +1,4 @@
-package ru.netology.diploma.dto;
+package ru.netology.diploma.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
