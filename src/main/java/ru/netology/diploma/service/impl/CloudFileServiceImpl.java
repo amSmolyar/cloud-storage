@@ -9,6 +9,7 @@ import ru.netology.diploma.service.CloudFileService;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -20,23 +21,28 @@ public class CloudFileServiceImpl implements CloudFileService {
 
     @Override
     public void uploadFile(MultipartFile file, String username, String filename) throws FileUploadException {
-        File uploadDir = new File(uploadPath + "/" + username);
-
-        if (!uploadDir.exists())
-            uploadDir.mkdirs();
-
-        Path dir = Paths.get(uploadPath + "/" + username);
-        Path filepath = Paths.get(dir.toString(), file.getOriginalFilename());
-
         try {
-            file.transferTo(filepath);
-        } catch (IOException | IllegalStateException e) {
-            throw new FileUploadException("Can't upload file " + filename);
+            File uploadDir = new File(uploadPath + "/" + username);
+
+            if (!uploadDir.exists())
+                uploadDir.mkdirs();
+
+            Path dir = Paths.get(uploadPath + "/" + username);
+            Path filepath = Paths.get(dir.toString(), file.getOriginalFilename());
+
+            try {
+                file.transferTo(filepath);
+            } catch (IOException | IllegalStateException e) {
+                throw new FileUploadException("Can't upload file " + filename);
+            }
+        } catch (InvalidPathException e) {
+            throw new FileUploadException("Can't create directory. Error path");
         }
+
     }
 
     @Override
-    public MultipartFile downloadFile(String username, String filename) throws InputDataException, FileNotFoundException, FileDownloadException {
+    public MultipartFile downloadFile(String username, String filename) throws FileNotFoundException, FileDownloadException {
 
         Path path = Paths.get(uploadPath + "/" + username + "/" + filename);
 

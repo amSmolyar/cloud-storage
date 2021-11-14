@@ -22,7 +22,7 @@ public class CloudDBServiceImpl implements CloudDBService {
     private final FileRepository fileRepository;
 
     @Autowired
-    public CloudDBServiceImpl(UserRepository userRepository, FileRepository fileRepository) {//, BCryptPasswordEncoder passwordEncoder) {
+    public CloudDBServiceImpl(UserRepository userRepository, FileRepository fileRepository) {
         this.userRepository = userRepository;
         this.fileRepository = fileRepository;
     }
@@ -40,16 +40,6 @@ public class CloudDBServiceImpl implements CloudDBService {
         User user = findUserByUsername(username);
         return fileRepository.findFirstByUserAndFilenameAndStatus(user, filename, Status.ACTIVE)
                 .orElse(null);
-    }
-
-    @Override
-    public List<StorageFile> getAllFilesByUserId(Long userId) {
-        User user = userRepository.findUserById(userId)
-                .orElse(null);
-        if (user != null)
-            return fileRepository.findAllByUserAndStatusOrderByIdDesc(user, Status.ACTIVE);
-
-        return new ArrayList<>();
     }
 
     @Override
@@ -83,7 +73,7 @@ public class CloudDBServiceImpl implements CloudDBService {
         fileUpload.setCreated((new Date()));
         fileUpload.setUpdated((new Date()));
         fileUpload.setStatus(Status.ACTIVE);
-        this.addFile(fileUpload);
+        fileRepository.save(fileUpload);
     }
 
 
@@ -113,8 +103,4 @@ public class CloudDBServiceImpl implements CloudDBService {
         fileRepository.save(file);
     }
 
-    @Override
-    public void addFile(StorageFile file) {
-        fileRepository.save(file);
-    }
 }

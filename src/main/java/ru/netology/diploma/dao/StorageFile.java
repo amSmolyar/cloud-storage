@@ -1,12 +1,15 @@
 package ru.netology.diploma.dao;
 
+import liquibase.pro.packaged.C;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Cascade;
 
 import javax.persistence.*;
 import javax.validation.constraints.Min;
+import java.util.Objects;
 
 @Entity
 @Table(name = "files")
@@ -22,6 +25,7 @@ public class StorageFile extends BaseDaoEntity {
     private int fileSize;
 
     @ManyToOne(fetch = FetchType.EAGER)
+    @Cascade(org.hibernate.annotations.CascadeType.SAVE_UPDATE)
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
 
@@ -29,5 +33,14 @@ public class StorageFile extends BaseDaoEntity {
         this.filename = filename;
         this.fileSize = fileSize;
         this.user = user;
+    }
+
+    @Override
+    public String toString() {
+        return "StorageFile{" +
+                "filename='" + filename + '\'' +
+                ", fileSize=" + fileSize +
+                ", user=" + user +
+                '}';
     }
 }

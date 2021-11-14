@@ -12,7 +12,4 @@ import java.util.Optional;
 public interface FileRepository extends JpaRepository<StorageFile, Long> {
     Optional<StorageFile> findFirstByUserAndFilenameAndStatus(User user, String filename, Status status);
     List<StorageFile> findAllByUserAndStatusOrderByIdDesc(User user, Status status);
-
-    @Query(value = "Select max(f.id) from files f", nativeQuery = true)
-    Long findMaxId();
 }
