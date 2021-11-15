@@ -1,6 +1,5 @@
 package ru.netology.diploma.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -21,14 +20,12 @@ import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private final JwtConfigurer jwtConfigurer;
 
     @Value("${cross.origin.address}")
     private String originAddr;
 
-    @Autowired
     public SecurityConfig(@Qualifier("jwtConfigurer") JwtConfigurer jwtConfigurer) {
         this.jwtConfigurer = jwtConfigurer;
     }
@@ -54,7 +51,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/login", configuration);
-        source.registerCorsConfiguration("/logout", configuration);
+        source.registerCorsConfiguration("/cloud/logout", configuration);
         source.registerCorsConfiguration("/file", configuration);
         source.registerCorsConfiguration("/list", configuration);
         return source;
@@ -63,14 +60,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
-
+                .csrf().disable()
                 .cors()
                 .and()
-                .csrf().disable()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests()
-                .antMatchers("/login", "/logout").permitAll()
+                .antMatchers("/login", "/cloud/logout").permitAll()
                 .antMatchers("/file", "/list").hasRole("ADMIN")
                 .anyRequest()
                 .authenticated()

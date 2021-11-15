@@ -2,6 +2,7 @@ package ru.netology.diploma.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -46,7 +47,7 @@ public class CloudController {
     }
 
     @GetMapping("/file")
-    public ResponseEntity<?> downloadFile(
+    public ResponseEntity<Resource> downloadFile(
             HttpServletRequest request,
             @RequestParam("filename") String filename) throws IOException, InputDataException, FileDownloadException {
 
