@@ -74,13 +74,14 @@ public class CloudStorageServiceImpl implements CloudStorageService {
     }
 
     @Override
-    public void deleteFile(String username, String filename) throws FileDeleteException {
+    public void deleteFile(String username, String filename) throws FileDeleteException, FileNotFoundException {
         if (cloudDBService.getCurrentFile(username, filename) != null) {
             try {
                 cloudFileService.deleteFile(username, filename);
                 cloudDBService.deleteFileByUsernameAndFilename(username, filename);
             } catch (FileNotFoundException e) {
                 cloudDBService.deleteFileByUsernameAndFilename(username, filename);
+                throw new FileNotFoundException(e.getMessage());
             }
         } else
             throw new InputDataException("File with name " + filename + " does not exist in storage");
