@@ -31,7 +31,6 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 
@@ -348,6 +347,6 @@ class CloudStorageServiceImplTest {
                 assertThat(fileList.get(ii).getFileSize()).isEqualTo(actual.get(ii).getSize());
             }
         }
-        
+
     }
 }

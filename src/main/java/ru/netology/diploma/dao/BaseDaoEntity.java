@@ -1,5 +1,6 @@
 package ru.netology.diploma.dao;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
@@ -11,6 +12,7 @@ import java.util.Date;
 @MappedSuperclass
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class BaseDaoEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
