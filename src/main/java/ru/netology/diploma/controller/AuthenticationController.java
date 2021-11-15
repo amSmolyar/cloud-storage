@@ -46,7 +46,7 @@ public class AuthenticationController {
 
 
     @CrossOrigin
-    @PostMapping("/cloud/logout")
+    @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
         String token = jwtTokenProvider.resolveToken(request);
         jwtTokenProvider.addTokenToBlackList(token);

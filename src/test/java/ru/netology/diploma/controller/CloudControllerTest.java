@@ -10,31 +10,23 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.MultipartFile;
-import ru.netology.diploma.dto.request.AuthenticationRequestDto;
 import ru.netology.diploma.dto.request.RenameFileRequestDto;
-import ru.netology.diploma.dto.response.AuthenticationResponseDto;
 import ru.netology.diploma.dto.response.FileFromListResponseDto;
 import ru.netology.diploma.pojo.exceptions.*;
-import ru.netology.diploma.security.jwt.JwtAuthenticationException;
 import ru.netology.diploma.security.jwt.JwtTokenProvider;
 import ru.netology.diploma.service.CloudStorageService;
 
 import javax.servlet.http.HttpServletRequest;
 
-import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -84,7 +76,6 @@ class CloudControllerTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
 
-        String username = "username";
         String filename = "test.txt";
         String text = "Text to be uploaded.";
         MockMultipartFile file = new MockMultipartFile(filename, filename, "text/plain", text.getBytes());
@@ -103,7 +94,7 @@ class CloudControllerTest {
         InputDataException e1 = assertThrows(InputDataException.class, () ->
                 cloudController.uploadFile(request, filename, file));
 
-        String message1 = e.getMessage();
+        String message1 = e1.getMessage();
         assertTrue(message1.equals("Incorrect file input data"));
     }
 
