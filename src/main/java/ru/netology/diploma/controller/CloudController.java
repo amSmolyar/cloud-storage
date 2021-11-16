@@ -1,5 +1,6 @@
 package ru.netology.diploma.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,7 @@ import java.io.*;
 import java.util.List;
 
 @RestController
+@Slf4j
 public class CloudController {
 
     private final AssistantService assistantService;
@@ -38,6 +40,7 @@ public class CloudController {
         String username = assistantService.resolveUsername(request);
         cloudStorageService.uploadFile(username, filename, file);
 
+        log.info("User " + username + " upload new file: " + filename);
         return ResponseEntity.ok(HttpStatus.OK);
     }
 
@@ -48,6 +51,8 @@ public class CloudController {
 
         String username = assistantService.resolveUsername(request);
         MultipartFile multipartFile = cloudStorageService.downloadFile(username, filename);
+
+        log.info("User " + username + " download file " + filename);
         return assistantService.sendFile(multipartFile);
     }
 
@@ -59,6 +64,7 @@ public class CloudController {
         String username = assistantService.resolveUsername(request);
         cloudStorageService.deleteFile(username, filename);
 
+        log.info("User " + username + " delete file " + filename);
         return ResponseEntity.ok(HttpStatus.OK);
     }
 
@@ -71,6 +77,7 @@ public class CloudController {
         String username = assistantService.resolveUsername(request);
         cloudStorageService.renameFile(username, filename, newFilename.getFilename());
 
+        log.info("User " + username + " rename file from " + filename + " to " + newFilename.getFilename());
         return ResponseEntity.ok(HttpStatus.OK);
     }
 

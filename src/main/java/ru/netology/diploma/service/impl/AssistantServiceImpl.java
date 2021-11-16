@@ -40,13 +40,16 @@ public class AssistantServiceImpl implements AssistantService {
     }
 
     @Override
-    public void logout(HttpServletRequest request, HttpServletResponse response) {
+    public String logout(HttpServletRequest request, HttpServletResponse response) {
         String token = jwtTokenProvider.resolveToken(request);
+        String username = jwtTokenProvider.getUsername(token);
         jwtTokenProvider.addTokenToBlackList(token);
 
         //Authentication authentication = jwtTokenProvider.getAuthentication(token);
         SecurityContextLogoutHandler securityContextLogoutHandler = new SecurityContextLogoutHandler();
         securityContextLogoutHandler.logout(request, response, null);
+
+        return username;
     }
 
     @Override

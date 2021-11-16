@@ -11,7 +11,7 @@ import java.io.IOException;
 
 public interface AssistantService {
     String createToken(AuthenticationRequestDto authenticationRequest);
-    void logout(HttpServletRequest request, HttpServletResponse response);
+    String logout(HttpServletRequest request, HttpServletResponse response);
 
     String resolveUsername(HttpServletRequest request);
     ResponseEntity<Resource> sendFile(MultipartFile file) throws IOException;

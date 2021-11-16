@@ -83,6 +83,7 @@ class AssistantServiceImplTest {
         MockHttpServletResponse response = new MockHttpServletResponse();
 
         when(jwtTokenProvider.resolveToken(any(HttpServletRequest.class))).thenReturn("Bearer_token");
+        when(jwtTokenProvider.getUsername(any(String.class))).thenReturn("username");
 
         assistantService.logout(request, response);
 

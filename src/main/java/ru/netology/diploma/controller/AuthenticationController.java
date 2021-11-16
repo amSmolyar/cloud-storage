@@ -1,5 +1,6 @@
 package ru.netology.diploma.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ import javax.validation.Valid;
 
 
 @RestController
+@Slf4j
 public class AuthenticationController {
     private final AssistantService assistantService;
 
@@ -29,6 +31,8 @@ public class AuthenticationController {
     public ResponseEntity<AuthenticationResponseDto> login(@Valid @RequestBody AuthenticationRequestDto authenticationRequest) {
         try {
             String token = assistantService.createToken(authenticationRequest);
+
+            log.info("User " + authenticationRequest.getLogin() + " logged in");
             return ResponseEntity.ok(new AuthenticationResponseDto(token));
         } catch (AuthenticationException e) {
             throw new BadCredentialsException("Invalid username or password");
@@ -39,7 +43,9 @@ public class AuthenticationController {
     @CrossOrigin
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
-        assistantService.logout(request, response);
+        String username = assistantService.logout(request, response);
+
+        log.info("User " + username + " logged out");
         return ResponseEntity.ok(HttpStatus.OK);
     }
 
