@@ -46,6 +46,25 @@ class CloudStorageServiceImplTest {
     @Mock
     CloudFileService cloudFileService;
 
+
+    @Test
+    void inputDataValidation_throwInputDataException() {
+        String filename = "test.txt";
+        String text = "Text to be uploaded.";
+
+        assertThrows(InputDataException.class, () ->
+                cloudStorageService.inputDataValidation(new MockMultipartFile(filename, "", "text/plain", text.getBytes())));
+
+        assertThrows(InputDataException.class, () ->
+                cloudStorageService.inputDataValidation(""));
+
+        assertThrows(InputDataException.class, () ->
+                cloudStorageService.inputDataValidation("filename"));
+
+        assertThrows(InputDataException.class, () ->
+                cloudStorageService.inputDataValidation(new String()));
+    }
+
     @Test
     void uploadFile_withoutException() {
         String username = "username";

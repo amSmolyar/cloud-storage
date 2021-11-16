@@ -14,7 +14,6 @@ import org.springframework.web.multipart.MultipartFile;
 import ru.netology.diploma.dto.request.AuthenticationRequestDto;
 import ru.netology.diploma.security.jwt.JwtTokenProvider;
 import ru.netology.diploma.service.AssistantService;
-import ru.netology.diploma.service.CloudStorageService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;

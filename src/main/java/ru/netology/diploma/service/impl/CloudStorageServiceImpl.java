@@ -2,6 +2,8 @@ package ru.netology.diploma.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.bind.DefaultValue;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import ru.netology.diploma.dao.StorageFile;
@@ -22,7 +24,7 @@ public class CloudStorageServiceImpl implements CloudStorageService {
     private final CloudFileService cloudFileService;
 
     @Value("${storage.files.regex}")
-    private String filenameRegex;
+    private String filenameRegex = ".+\\.\\w+$";
 
     @Autowired
     public CloudStorageServiceImpl(CloudDBService cloudDBService, CloudFileService cloudFileService) {
@@ -44,6 +46,7 @@ public class CloudStorageServiceImpl implements CloudStorageService {
 
     @Override
     public void uploadFile(String username, String filename, MultipartFile file) throws FileRewriteException, FileUploadException {
+
         inputDataValidation(file);
         inputDataValidation(filename);
 

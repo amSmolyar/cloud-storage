@@ -3,15 +3,11 @@ package ru.netology.diploma.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.web.bind.annotation.*;
 import ru.netology.diploma.dto.request.AuthenticationRequestDto;
 import ru.netology.diploma.dto.response.AuthenticationResponseDto;
-import ru.netology.diploma.security.jwt.JwtTokenProvider;
 import ru.netology.diploma.service.AssistantService;
 
 import javax.servlet.http.HttpServletRequest;
@@ -27,7 +23,6 @@ public class AuthenticationController {
     public AuthenticationController(AssistantService assistantService) {
         this.assistantService = assistantService;
     }
-
 
     @CrossOrigin
     @PostMapping("/login")

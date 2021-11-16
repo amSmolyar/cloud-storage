@@ -10,29 +10,29 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import org.springframework.web.multipart.MultipartFile;
 import ru.netology.diploma.dto.request.RenameFileRequestDto;
 import ru.netology.diploma.dto.response.FileFromListResponseDto;
 import ru.netology.diploma.pojo.exceptions.*;
-import ru.netology.diploma.security.jwt.JwtTokenProvider;
+import ru.netology.diploma.service.AssistantService;
 import ru.netology.diploma.service.CloudStorageService;
 
-import javax.servlet.http.HttpServletRequest;
-
+import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -43,7 +43,7 @@ class CloudControllerTest {
     CloudController cloudController;
 
     @Mock
-    JwtTokenProvider jwtTokenProvider;
+    AssistantService assistantService;
 
     @Mock
     CloudStorageService cloudStorageService;
@@ -59,15 +59,11 @@ class CloudControllerTest {
         String text = "Text to be uploaded.";
         MockMultipartFile file = new MockMultipartFile(filename, filename, "text/plain", text.getBytes());
 
-        when(jwtTokenProvider.resolveToken(any(HttpServletRequest.class))).thenReturn("Bearer_token");
-        when(jwtTokenProvider.getUsername(any(String.class))).thenReturn(username);
+        when(assistantService.resolveUsername(request)).thenReturn(username);
 
         ResponseEntity<?> responseEntity = assertDoesNotThrow(() -> cloudController.uploadFile(request, filename, file));
         assertThat(responseEntity.getStatusCodeValue()).isEqualTo(200);
-        Mockito.verify(cloudStorageService, times(1)).inputDataValidation(any(String.class));
-        Mockito.verify(cloudStorageService, times(1)).inputDataValidation(any(MultipartFile.class));
-        Mockito.verify(jwtTokenProvider, times(1)).resolveToken(request);
-        Mockito.verify(jwtTokenProvider, times(1)).getUsername(any(String.class));
+        Mockito.verify(assistantService, times(1)).resolveUsername(request);
         assertDoesNotThrow(() -> Mockito.verify(cloudStorageService, times(1)).uploadFile(username, filename, file));
     }
 
@@ -76,26 +72,23 @@ class CloudControllerTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
 
+        String username = "username";
         String filename = "test.txt";
         String text = "Text to be uploaded.";
         MockMultipartFile file = new MockMultipartFile(filename, filename, "text/plain", text.getBytes());
 
-        doThrow(new InputDataException("Incorrect file input data")).when(cloudStorageService).inputDataValidation(any(MultipartFile.class));
+        when(assistantService.resolveUsername(request)).thenReturn(username);
+        try {
+            doThrow(new InputDataException("Incorrect file input data")).when(cloudStorageService).uploadFile(username, filename, file);
+        } catch (FileRewriteException | FileUploadException e) {
+            fail();
+        }
 
         InputDataException e = assertThrows(InputDataException.class, () ->
                 cloudController.uploadFile(request, filename, file));
 
         String message = e.getMessage();
         assertTrue(message.equals("Incorrect file input data"));
-
-        doThrow(new InputDataException("Incorrect file input data")).when(cloudStorageService).inputDataValidation(any(String.class));
-        doNothing().when(cloudStorageService).inputDataValidation(any(MultipartFile.class));
-
-        InputDataException e1 = assertThrows(InputDataException.class, () ->
-                cloudController.uploadFile(request, filename, file));
-
-        String message1 = e1.getMessage();
-        assertTrue(message1.equals("Incorrect file input data"));
     }
 
     @Test
@@ -108,17 +101,11 @@ class CloudControllerTest {
         String text = "Text to be uploaded.";
         MockMultipartFile file = new MockMultipartFile(filename, filename, "text/plain", text.getBytes());
 
-        doNothing().when(cloudStorageService).inputDataValidation(any(MultipartFile.class));
-        doNothing().when(cloudStorageService).inputDataValidation(any(String.class));
-
-        when(jwtTokenProvider.resolveToken(any(HttpServletRequest.class))).thenReturn("Bearer_token");
-        when(jwtTokenProvider.getUsername(any(String.class))).thenReturn(username);
-
+        when(assistantService.resolveUsername(request)).thenReturn(username);
         try {
             doThrow(new FileUploadException("upload exception")).when(cloudStorageService).uploadFile(username, filename, file);
         } catch (FileUploadException | FileRewriteException e) {
-            System.out.println(e.getMessage());
-            assertTrue(false);
+            fail();
         }
         assertThrows(FileUploadException.class, () ->
                 cloudController.uploadFile(request, filename, file));
@@ -126,8 +113,7 @@ class CloudControllerTest {
         try {
             doThrow(new FileRewriteException("rewrite exception")).when(cloudStorageService).uploadFile(username, filename, file);
         } catch (FileUploadException | FileRewriteException e) {
-            System.out.println(e.getMessage());
-            assertTrue(false);
+            fail();
         }
         assertThrows(FileRewriteException.class, () ->
                 cloudController.uploadFile(request, filename, file));
@@ -143,9 +129,32 @@ class CloudControllerTest {
         String text = "Text to be uploaded.";
         MockMultipartFile file = new MockMultipartFile(filename, filename, "text/plain", text.getBytes());
 
-        when(jwtTokenProvider.resolveToken(any(HttpServletRequest.class))).thenReturn("Bearer_token");
-        when(jwtTokenProvider.getUsername(any(String.class))).thenReturn(username);
+        when(assistantService.resolveUsername(request)).thenReturn(username);
         assertDoesNotThrow(() -> when(cloudStorageService.downloadFile(username, filename)).thenReturn(file));
+
+        // expected response
+        try {
+            byte[] body = file.getBytes();
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + file.getOriginalFilename());
+            headers.add("Cache-Control", "no-cache, no-store, must-revalidate");
+            headers.add("Pragma", "no-cache");
+            headers.add("Expires", "0");
+
+            InputStreamResource resource = new InputStreamResource(new ByteArrayInputStream(body));
+
+            ResponseEntity<Resource> expected = ResponseEntity.ok()
+                    .headers(headers)
+                    .contentLength(file.getSize())
+                    .contentType(MediaType.MULTIPART_FORM_DATA)
+                    .body(resource);
+
+            when(assistantService.sendFile(file)).thenReturn(expected);
+        } catch (IOException e) {
+            fail();
+        }
+        //==============
 
         ResponseEntity<Resource> responseEntity = assertDoesNotThrow(() -> cloudController.downloadFile(request, filename));
         assertThat(responseEntity.getStatusCodeValue()).isEqualTo(200);
@@ -162,11 +171,13 @@ class CloudControllerTest {
 
         String username = "username";
         String filename = "test.txt";
-        String text = "Text to be uploaded.";
-        MockMultipartFile file = new MockMultipartFile(filename, filename, "text/plain", text.getBytes());
 
-        doThrow(new InputDataException("Incorrect file input data")).when(cloudStorageService).inputDataValidation(any(String.class));
-
+        when(assistantService.resolveUsername(request)).thenReturn(username);
+        try {
+            doThrow(new InputDataException("Incorrect file input data")).when(cloudStorageService).downloadFile(username, filename);
+        } catch (FileNotFoundException | FileDownloadException e) {
+            fail();
+        }
         InputDataException e = assertThrows(InputDataException.class, () ->
                 cloudController.downloadFile(request, filename));
 
@@ -181,19 +192,13 @@ class CloudControllerTest {
 
         String username = "username";
         String filename = "test.txt";
-        String text = "Text to be uploaded.";
-        MockMultipartFile file = new MockMultipartFile(filename, filename, "text/plain", text.getBytes());
 
-        doNothing().when(cloudStorageService).inputDataValidation(any(String.class));
-
-        when(jwtTokenProvider.resolveToken(any(HttpServletRequest.class))).thenReturn("Bearer_token");
-        when(jwtTokenProvider.getUsername(any(String.class))).thenReturn(username);
-
+        when(assistantService.resolveUsername(request)).thenReturn(username);
         try {
             doThrow(new FileDownloadException("download exception")).when(cloudStorageService).downloadFile(username, filename);
         } catch (FileDownloadException | FileNotFoundException e) {
             System.out.println(e.getMessage());
-            assertTrue(false);
+            fail();
         }
         assertThrows(FileDownloadException.class, () ->
                 cloudController.downloadFile(request, filename));
@@ -202,7 +207,7 @@ class CloudControllerTest {
             doThrow(new FileNotFoundException("file not found exception")).when(cloudStorageService).downloadFile(username, filename);
         } catch (FileDownloadException | FileNotFoundException e) {
             System.out.println(e.getMessage());
-            assertTrue(false);
+            fail();
         }
         assertThrows(FileNotFoundException.class, () ->
                 cloudController.downloadFile(request, filename));
@@ -216,8 +221,7 @@ class CloudControllerTest {
         String username = "username";
         String filename = "test.txt";
 
-        when(jwtTokenProvider.resolveToken(any(HttpServletRequest.class))).thenReturn("Bearer_token");
-        when(jwtTokenProvider.getUsername(any(String.class))).thenReturn(username);
+        when(assistantService.resolveUsername(request)).thenReturn(username);
 
         ResponseEntity<?> responseEntity = assertDoesNotThrow(() -> cloudController.deleteFile(request, filename));
         assertThat(responseEntity.getStatusCodeValue()).isEqualTo(200);
@@ -228,9 +232,15 @@ class CloudControllerTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
 
+        String username = "username";
         String filename = "test.txt";
 
-        doThrow(new InputDataException("Incorrect file input data")).when(cloudStorageService).inputDataValidation(any(String.class));
+        when(assistantService.resolveUsername(request)).thenReturn(username);
+        try {
+            doThrow(new InputDataException("Incorrect file input data")).when(cloudStorageService).deleteFile(username, filename);
+        } catch (FileNotFoundException | FileDeleteException e) {
+            fail();
+        }
 
         InputDataException e = assertThrows(InputDataException.class, () ->
                 cloudController.deleteFile(request, filename));
@@ -247,16 +257,12 @@ class CloudControllerTest {
         String username = "username";
         String filename = "test.txt";
 
-        doNothing().when(cloudStorageService).inputDataValidation(any(String.class));
-
-        when(jwtTokenProvider.resolveToken(any(HttpServletRequest.class))).thenReturn("Bearer_token");
-        when(jwtTokenProvider.getUsername(any(String.class))).thenReturn(username);
-
+        when(assistantService.resolveUsername(request)).thenReturn(username);
         try {
             doThrow(new FileDeleteException("delete exception")).when(cloudStorageService).deleteFile(username, filename);
         } catch (FileDeleteException | FileNotFoundException e) {
             System.out.println(e.getMessage());
-            assertTrue(false);
+            fail();
         }
         assertThrows(FileDeleteException.class, () ->
                 cloudController.deleteFile(request, filename));
@@ -265,7 +271,7 @@ class CloudControllerTest {
             doThrow(new FileNotFoundException("file not found exception")).when(cloudStorageService).deleteFile(username, filename);
         } catch (FileDeleteException | FileNotFoundException e) {
             System.out.println(e.getMessage());
-            assertTrue(false);
+            fail();
         }
         assertThrows(FileNotFoundException.class, () ->
                 cloudController.deleteFile(request, filename));
@@ -282,8 +288,7 @@ class CloudControllerTest {
 
         RenameFileRequestDto renameFileRequestDto = new RenameFileRequestDto(newFilename);
 
-        when(jwtTokenProvider.resolveToken(any(HttpServletRequest.class))).thenReturn("Bearer_token");
-        when(jwtTokenProvider.getUsername(any(String.class))).thenReturn(username);
+        when(assistantService.resolveUsername(request)).thenReturn(username);
 
         ResponseEntity<?> responseEntity = assertDoesNotThrow(() -> cloudController.renameFile(request, filename, renameFileRequestDto));
         assertThat(responseEntity.getStatusCodeValue()).isEqualTo(200);
@@ -294,12 +299,18 @@ class CloudControllerTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
 
+        String username = "username";
         String filename = "test.txt";
         String newFilename = "test-new-filename.txt";
 
         RenameFileRequestDto renameFileRequestDto = new RenameFileRequestDto(newFilename);
 
-        doThrow(new InputDataException("Incorrect file input data")).when(cloudStorageService).inputDataValidation(any(String.class));
+        when(assistantService.resolveUsername(request)).thenReturn(username);
+        try {
+            doThrow(new InputDataException("Incorrect file input data")).when(cloudStorageService).renameFile(username, filename, newFilename);
+        } catch (FileNotFoundException | FileRewriteException e) {
+            fail();
+        }
 
         InputDataException e = assertThrows(InputDataException.class, () ->
                 cloudController.renameFile(request, filename, renameFileRequestDto));
@@ -319,16 +330,13 @@ class CloudControllerTest {
 
         RenameFileRequestDto renameFileRequestDto = new RenameFileRequestDto(newFilename);
 
-        doNothing().when(cloudStorageService).inputDataValidation(any(String.class));
-
-        when(jwtTokenProvider.resolveToken(any(HttpServletRequest.class))).thenReturn("Bearer_token");
-        when(jwtTokenProvider.getUsername(any(String.class))).thenReturn(username);
+        when(assistantService.resolveUsername(request)).thenReturn(username);
 
         try {
             doThrow(new FileRewriteException("file rewrite exception")).when(cloudStorageService).renameFile(username, filename, newFilename);
         } catch (FileRewriteException | FileNotFoundException e) {
             System.out.println(e.getMessage());
-            assertTrue(false);
+            fail();
         }
         assertThrows(FileRewriteException.class, () ->
                 cloudController.renameFile(request, filename, renameFileRequestDto));
@@ -337,7 +345,7 @@ class CloudControllerTest {
             doThrow(new FileNotFoundException("file not found exception")).when(cloudStorageService).renameFile(username, filename, newFilename);
         } catch (FileRewriteException | FileNotFoundException e) {
             System.out.println(e.getMessage());
-            assertTrue(false);
+            fail();
         }
         assertThrows(FileNotFoundException.class, () ->
                 cloudController.renameFile(request, filename, renameFileRequestDto));
@@ -363,8 +371,7 @@ class CloudControllerTest {
                 .limit(limit)
                 .collect(Collectors.toList());
 
-        when(jwtTokenProvider.resolveToken(any(HttpServletRequest.class))).thenReturn("Bearer_token");
-        when(jwtTokenProvider.getUsername(any(String.class))).thenReturn(username);
+        when(assistantService.resolveUsername(request)).thenReturn(username);
         when(cloudStorageService.getLimitFileList(username, limit)).thenReturn(limitList);
 
         ResponseEntity<List<FileFromListResponseDto>> responseEntity = cloudController.getList(request, limit);

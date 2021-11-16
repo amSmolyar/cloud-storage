@@ -2,11 +2,9 @@ package ru.netology.diploma.controller;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.Mockito;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.security.authentication.AuthenticationManager;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,16 +14,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import ru.netology.diploma.dto.request.AuthenticationRequestDto;
 import ru.netology.diploma.dto.response.AuthenticationResponseDto;
 import ru.netology.diploma.security.jwt.JwtAuthenticationException;
-import ru.netology.diploma.security.jwt.JwtTokenProvider;
+import ru.netology.diploma.service.AssistantService;
 
 
-import javax.servlet.http.HttpServletRequest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -41,10 +37,8 @@ class AuthenticationControllerTest {
     AuthenticationController authenticationController;
 
     @Mock
-    AuthenticationManager authenticationManager;
+    AssistantService assistantService;
 
-    @Mock
-    JwtTokenProvider jwtTokenProvider;
 
     @ParameterizedTest
     @ValueSource(strings = {"user1", "user2", "user3"})
@@ -54,7 +48,7 @@ class AuthenticationControllerTest {
 
         AuthenticationRequestDto authenticationRequestDto = new AuthenticationRequestDto(login, "password");
 
-        when(jwtTokenProvider.createToken(authenticationRequestDto.getLogin())).thenReturn("Bearer_" + authenticationRequestDto.getLogin() + "_token");
+        when(assistantService.createToken(authenticationRequestDto)).thenReturn("Bearer_" + authenticationRequestDto.getLogin() + "_token");
 
         ResponseEntity<AuthenticationResponseDto> responseEntity = authenticationController.login(authenticationRequestDto);
 
@@ -70,7 +64,7 @@ class AuthenticationControllerTest {
 
         AuthenticationRequestDto authenticationRequestDto = new AuthenticationRequestDto(login, "password");
 
-        doThrow(new JwtAuthenticationException("authentication exception")).when(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
+        doThrow(new JwtAuthenticationException("authentication exception")).when(assistantService).createToken(any(AuthenticationRequestDto.class));
 
         BadCredentialsException e = assertThrows(BadCredentialsException.class, () ->
                 authenticationController.login(authenticationRequestDto));
@@ -86,12 +80,7 @@ class AuthenticationControllerTest {
 
         MockHttpServletResponse response = new MockHttpServletResponse();
 
-        when(jwtTokenProvider.resolveToken(any(HttpServletRequest.class))).thenReturn("Bearer_token");
-
         ResponseEntity<?> responseEntity = authenticationController.logout(request, response);
-
         assertThat(responseEntity.getStatusCodeValue()).isEqualTo(200);
-        Mockito.verify(jwtTokenProvider, times(1)).resolveToken(any(HttpServletRequest.class));
-        Mockito.verify(jwtTokenProvider, times(1)).addTokenToBlackList(any(String.class));
     }
 }
