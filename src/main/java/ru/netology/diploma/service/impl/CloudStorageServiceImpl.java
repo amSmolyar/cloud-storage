@@ -44,6 +44,9 @@ public class CloudStorageServiceImpl implements CloudStorageService {
 
     @Override
     public void uploadFile(String username, String filename, MultipartFile file) throws FileRewriteException, FileUploadException {
+        inputDataValidation(file);
+        inputDataValidation(filename);
+
         if (cloudDBService.getCurrentFile(username, filename) != null)
             throw new FileRewriteException("File with name " + filename + " already exists");
 
@@ -53,6 +56,8 @@ public class CloudStorageServiceImpl implements CloudStorageService {
 
     @Override
     public MultipartFile downloadFile(String username, String filename) throws FileNotFoundException, FileDownloadException {
+        inputDataValidation(filename);
+
         if (cloudDBService.getCurrentFile(username, filename) == null)
             throw new FileNotFoundException("File with name " + filename + " does not exist in your storage");
 
@@ -61,6 +66,8 @@ public class CloudStorageServiceImpl implements CloudStorageService {
 
     @Override
     public void renameFile(String username, String filename, String newFilename) throws FileNotFoundException, FileRewriteException  {
+        inputDataValidation(filename);
+
         if (cloudDBService.getCurrentFile(username, filename) != null) {
             try {
                 cloudFileService.renameFile(username, filename, newFilename);
@@ -75,6 +82,8 @@ public class CloudStorageServiceImpl implements CloudStorageService {
 
     @Override
     public void deleteFile(String username, String filename) throws FileDeleteException, FileNotFoundException {
+        inputDataValidation(filename);
+
         if (cloudDBService.getCurrentFile(username, filename) != null) {
             try {
                 cloudFileService.deleteFile(username, filename);

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.netology.diploma.dto.request.AuthenticationRequestDto;
 import ru.netology.diploma.dto.response.AuthenticationResponseDto;
 import ru.netology.diploma.security.jwt.JwtTokenProvider;
+import ru.netology.diploma.service.AssistantService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -20,13 +21,11 @@ import javax.validation.Valid;
 
 @RestController
 public class AuthenticationController {
-    private final AuthenticationManager authenticationManager;
-    private final JwtTokenProvider jwtTokenProvider;
+    private final AssistantService assistantService;
 
     @Autowired
-    public AuthenticationController(AuthenticationManager authenticationManager, JwtTokenProvider jwtTokenProvider) {
-        this.authenticationManager = authenticationManager;
-        this.jwtTokenProvider = jwtTokenProvider;
+    public AuthenticationController(AssistantService assistantService) {
+        this.assistantService = assistantService;
     }
 
 
@@ -34,10 +33,7 @@ public class AuthenticationController {
     @PostMapping("/login")
     public ResponseEntity<AuthenticationResponseDto> login(@Valid @RequestBody AuthenticationRequestDto authenticationRequest) {
         try {
-            String username = authenticationRequest.getLogin();
-            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, authenticationRequest.getPassword()));
-            String token = jwtTokenProvider.createToken(username);
-
+            String token = assistantService.createToken(authenticationRequest);
             return ResponseEntity.ok(new AuthenticationResponseDto(token));
         } catch (AuthenticationException e) {
             throw new BadCredentialsException("Invalid username or password");
@@ -48,14 +44,7 @@ public class AuthenticationController {
     @CrossOrigin
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
-        String token = jwtTokenProvider.resolveToken(request);
-        jwtTokenProvider.addTokenToBlackList(token);
-
-
-        //Authentication authentication = jwtTokenProvider.getAuthentication(token);
-        SecurityContextLogoutHandler securityContextLogoutHandler = new SecurityContextLogoutHandler();
-        securityContextLogoutHandler.logout(request, response, null);
-
+        assistantService.logout(request, response);
         return ResponseEntity.ok(HttpStatus.OK);
     }
 
