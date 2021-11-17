@@ -1,0 +1,40 @@
+
+version: '3.7'
+
+services:
+
+  mycloudapp:
+    container_name: mycloudapp
+    build: .
+    ports:
+      - 8081:8081
+    command: java -jar mycloudapp.jar
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/netology
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: mysql
+      SPRING_JPA_HIBERNATE_DDL_AUTO: none
+      SPRING_LIQUIBASE_URL: jdbc:mysql://db:3306/netology
+      SPRING_LIQUIBASE_USER: root
+      SPRING_LIQUIBASE_PASSWORD: mysql
+    links:
+      - db
+    networks:
+      - cloud
+
+  db:
+    container_name: mysql
+    image: mysql:8.0
+    ports:
+      - 3307:3306
+    environment:
+      MYSQL_USERNAME: root
+      MYSQL_PASSWORD: mysql
+      MYSQL_DATABASE: netology
+      MYSQL_ROOT_PASSWORD: mysql
+    networks:
+      - cloud
+
+networks:
+  cloud:
+    external: true

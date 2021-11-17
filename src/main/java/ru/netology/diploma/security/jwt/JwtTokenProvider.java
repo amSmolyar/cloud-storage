@@ -32,7 +32,6 @@ public class JwtTokenProvider {
 
     private final UserDetailsService userDetailsService;
 
-    @Autowired
     public JwtTokenProvider(@Qualifier("jwtUserDetailService") UserDetailsService userDetailsService, @Qualifier("jwtBlackListServiceImpl") JwtBlackListService jwtBlackListService) {
         this.userDetailsService = userDetailsService;
         this.jwtBlackListService = jwtBlackListService;

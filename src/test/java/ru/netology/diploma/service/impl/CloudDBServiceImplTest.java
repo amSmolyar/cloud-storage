@@ -55,14 +55,14 @@ class CloudDBServiceImplTest {
 
     public static Stream<User> getUsers() {
         uploadDataToDB();
-        List<User> userList = List.of(user1, user2, user3);
+        List<User> userList = Arrays.asList(user1, user2, user3);
         return userList.stream();
     }
 
     @Test
     void findUserByUsername_ok() {
         uploadDataToDB();
-        List<User> userList = List.of(user1, user2, user3);
+        List<User> userList = Arrays.asList(user1, user2, user3);
 
         for (int ii = 0; ii < userList.size(); ii++) {
             User user = userList.get(ii);
@@ -131,7 +131,7 @@ class CloudDBServiceImplTest {
         Mockito.when(fileRepository.findFirstByUserAndFilenameAndStatus(any(User.class), anyString(), any(Status.class)))
                 .thenAnswer(fileAnswer);
 
-        List<String> fileNames = List.of("1", "filename4", "filename5");
+        List<String> fileNames = Arrays.asList("1", "filename4", "filename5");
         for (int ii = 0; ii < fileNames.size(); ii++) {
             String filename = fileNames.get(ii);
             StorageFile actual = cloudDBService.getCurrentFile(user.getUsername(), filename);
@@ -360,9 +360,9 @@ class CloudDBServiceImplTest {
 
     public Answer<Optional<User>> findUserByUsernameAnswer() {
         uploadDataToDB();
-        List<User> userList = List.of(user1, user2, user3);
+        List<User> userList = Arrays.asList(user1, user2, user3);
 
-        Answer<Optional<User>> answer = new Answer<>() {
+        Answer<Optional<User>> answer = new Answer<Optional<User>>() {
             public Optional<User> answer(InvocationOnMock invocation) {
                 String string = invocation.getArgument(0, String.class);
 
@@ -383,7 +383,7 @@ class CloudDBServiceImplTest {
     public Answer<Optional<StorageFile>> findFileByUserAndFilenameAndStatusAnswer() {
         uploadDataToDB();
 
-        Answer<Optional<StorageFile>> answer = new Answer<>() {
+        Answer<Optional<StorageFile>> answer = new Answer<Optional<StorageFile>>() {
             public Optional<StorageFile> answer(InvocationOnMock invocation) throws Throwable {
                 Object[] args = invocation.getArguments();
                 User user = (User) args[0];
@@ -415,7 +415,7 @@ class CloudDBServiceImplTest {
     }
 
     public Answer<List<StorageFile>> findAllByUserAndStatusOrderByIdDescAnswer() {
-        Answer<List<StorageFile>> answer = new Answer<>() {
+        Answer<List<StorageFile>> answer = new Answer<List<StorageFile>>() {
             public List<StorageFile> answer(InvocationOnMock invocation) throws Throwable {
                 Object[] args = invocation.getArguments();
                 User user = (User) args[0];
@@ -436,9 +436,9 @@ class CloudDBServiceImplTest {
 
     public Answer<StorageFile> saveFileAnswer() {
         uploadDataToDB();
-        List<StorageFile> fileList = List.of(file1, file2, file3, file4, file5);
+        List<StorageFile> fileList = Arrays.asList(file1, file2, file3, file4, file5);
 
-        Answer<StorageFile> answer = new Answer<>() {
+        Answer<StorageFile> answer = new Answer<StorageFile>() {
             public StorageFile answer(InvocationOnMock invocation) throws Throwable {
                 Object[] args = invocation.getArguments();
                 StorageFile newFile = (StorageFile) args[0];
@@ -451,9 +451,9 @@ class CloudDBServiceImplTest {
                     fileList.get(fileId-1).setUpdated(newFile.getUpdated());
                     fileList.get(fileId-1).setUser(newFile.getUser());
 
-                    user1.setUserFiles(List.of(file1, file2, file3));
-                    user2.setUserFiles(List.of(file4));
-                    user3.setUserFiles(List.of(file5));
+                    user1.setUserFiles(Arrays.asList(file1, file2, file3));
+                    user2.setUserFiles(Arrays.asList(file4));
+                    user3.setUserFiles(Arrays.asList(file5));
                 }
                 return newFile;
             }
@@ -550,8 +550,8 @@ class CloudDBServiceImplTest {
         file5.setUser(user3);
         file5.setId(5L);
 
-        user1.setUserFiles(List.of(file1, file2, file3));
-        user2.setUserFiles(List.of(file4));
-        user3.setUserFiles(List.of(file5));
+        user1.setUserFiles(Arrays.asList(file1, file2, file3));
+        user2.setUserFiles(Arrays.asList(file4));
+        user3.setUserFiles(Arrays.asList(file5));
     }
 }

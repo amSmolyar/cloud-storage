@@ -21,6 +21,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import org.testcontainers.shaded.com.google.common.io.ByteStreams;
 import ru.netology.diploma.dto.request.AuthenticationRequestDto;
 import ru.netology.diploma.security.jwt.JwtAuthenticationException;
 import ru.netology.diploma.security.jwt.JwtTokenProvider;
@@ -119,6 +120,6 @@ class AssistantServiceImplTest {
         Assertions.assertThat(actual.getHeaders().getContentType()).isEqualTo(MediaType.MULTIPART_FORM_DATA);
         Assertions.assertThat(actual.getHeaders().getContentLength()).isEqualTo(file.getSize());
 
-        assertDoesNotThrow(() -> Assertions.assertThat(actual.getBody().getInputStream().readAllBytes()).isEqualTo((file.getBytes())));
+        assertDoesNotThrow(() -> Assertions.assertThat(ByteStreams.toByteArray(actual.getBody().getInputStream())).isEqualTo((file.getBytes())));
     }
 }

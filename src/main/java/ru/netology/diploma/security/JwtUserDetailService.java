@@ -16,7 +16,6 @@ import ru.netology.diploma.service.UserService;
 public class JwtUserDetailService implements UserDetailsService {
     private final UserService userService;
 
-    @Autowired
     public JwtUserDetailService(@Qualifier("cloudDBServiceImpl") UserService userService) {
         this.userService = userService;
     }

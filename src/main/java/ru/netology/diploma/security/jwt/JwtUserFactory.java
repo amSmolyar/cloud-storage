@@ -5,7 +5,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import ru.netology.diploma.dao.Status;
 import ru.netology.diploma.dao.User;
 
-import java.util.List;
+import java.util.Arrays;
 
 @NoArgsConstructor
 public final class JwtUserFactory {
@@ -19,6 +19,6 @@ public final class JwtUserFactory {
                 user.getPassword(),
                 user.getStatus().equals(Status.ACTIVE),
                 user.getUpdated(),
-                List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
+                Arrays.asList(new SimpleGrantedAuthority("ROLE_ADMIN")));
     }
 }

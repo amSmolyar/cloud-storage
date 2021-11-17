@@ -19,6 +19,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import org.testcontainers.shaded.com.google.common.io.ByteStreams;
 import ru.netology.diploma.dto.request.RenameFileRequestDto;
 import ru.netology.diploma.dto.response.FileFromListResponseDto;
 import ru.netology.diploma.pojo.exceptions.*;
@@ -28,6 +29,7 @@ import ru.netology.diploma.service.CloudStorageService;
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -161,7 +163,7 @@ class CloudControllerTest {
         assertThat(responseEntity.getHeaders().getContentType()).isEqualTo(MediaType.MULTIPART_FORM_DATA);
         assertThat(responseEntity.getHeaders().getContentLength()).isEqualTo(file.getSize());
 
-        assertDoesNotThrow(() -> assertThat(responseEntity.getBody().getInputStream().readAllBytes()).isEqualTo((file.getBytes())));
+        assertDoesNotThrow(() -> assertThat(ByteStreams.toByteArray(responseEntity.getBody().getInputStream())).isEqualTo((file.getBytes())));
     }
 
     @Test
@@ -363,7 +365,7 @@ class CloudControllerTest {
         FileFromListResponseDto file4 = new FileFromListResponseDto("filename4", 4567);
         FileFromListResponseDto file5 = new FileFromListResponseDto("filename5", 5678);
 
-        List<FileFromListResponseDto> fileList = List.of(file1, file2, file3, file4, file5);
+        List<FileFromListResponseDto> fileList = Arrays.asList(file1, file2, file3, file4, file5);
 
         String username = "username";
 
