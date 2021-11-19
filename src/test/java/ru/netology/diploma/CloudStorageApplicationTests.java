@@ -19,6 +19,8 @@ import ru.netology.diploma.dto.request.RenameFileRequestDto;
 import ru.netology.diploma.dto.response.AuthenticationResponseDto;
 import ru.netology.diploma.dto.response.FileFromListResponseDto;
 
+import javax.transaction.Transactional;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.File;
@@ -38,20 +40,20 @@ class CloudStorageApplicationTests {
     public static DockerComposeContainer composeContainer =
             new DockerComposeContainer(new File("docker-compose.yml"))
                     .withExposedService("db_1", PORT_DB)
-                    .withExposedService("mycloudapp_1", PORT_APP)
-                    .withLocalCompose(true);
+                    .withExposedService("mycloudapp_1", PORT_APP);
 
     private String host;
     private int port;
 
     @BeforeEach
     void setup() {
+        composeContainer.start();
         host = composeContainer.getServiceHost("mycloudapp_1", PORT_APP);
         port = composeContainer.getServicePort("mycloudapp_1", PORT_APP);
-
     }
 
     @Test
+    @Transactional
     public void test_fullCycle_response200() {
         // Тест представляет из себя имитацию работы с приложением, с использованием всех его возможностей.
         // Этапы тестирования:
@@ -206,7 +208,7 @@ class CloudStorageApplicationTests {
         ResponseEntity<byte[]> getFileEntity = downloadFileResponseEntity(token, downloadFilename);
 
         assertThat(getFileEntity.getStatusCodeValue()).isEqualTo(200);
-
+        assertThat(getFileEntity.getBody()).isEqualTo(text1.getBytes());
 
 
         // Скачиваем второй загруженный файл (filename2): ===========================================
@@ -217,7 +219,7 @@ class CloudStorageApplicationTests {
         getFileEntity = downloadFileResponseEntity(token, downloadFilename);
 
         assertThat(getFileEntity.getStatusCodeValue()).isEqualTo(200);
-
+        assertThat(getFileEntity.getBody()).isEqualTo(text2.getBytes());
 
 
         // Удаляем первый загруженный файл (переименованный): ===========================================
@@ -280,14 +282,186 @@ class CloudStorageApplicationTests {
 
 
     @Test
+    @Transactional
     public void test_loginErrors() {
-        // Логинимся с инвалидными данными: ===========================================
+
+            // Пароль с ошибкой:
 
         String username = "evgenius@gmail.com";
-        String password = "1234";
+        String password = "123456";
 
-        ResponseEntity<AuthenticationResponseDto> postLoginEntity = loginResponseEntity(username, password);
-        assertThat(postLoginEntity.getStatusCodeValue()).isEqualTo(200);
+        ResponseEntity<AuthenticationResponseDto> responseEntity = loginResponseEntity(username, password);
+        assertThat(responseEntity.getStatusCodeValue()).isEqualTo(401);
+
+            // Логин с ошибкой:
+
+        username = "evgenius";
+        password = "password1";
+
+        responseEntity = loginResponseEntity(username, password);
+        assertThat(responseEntity.getStatusCodeValue()).isEqualTo(401);
+    }
+
+    @Test
+    @Transactional
+    public void test_fileUploadErrors() {
+            // login - получаем токен
+        String username = "evgenius@gmail.com";
+        String password = "password1";
+
+        String token = login(username, password);
+
+            // Успешная загрузка файла test.txt
+        String filename = "test.txt";
+        String text1 = "Text to be uploaded.";
+
+        ResponseEntity<String> postFileEntity = uploadFileResponseEntity(token, filename, text1);
+        assertThat(postFileEntity.getStatusCodeValue()).isEqualTo(200);
+
+            // Попытка загрузить другой файл с тем же именем:
+        String text2 = "Another text to be uploaded.";
+        postFileEntity = uploadFileResponseEntity(token, filename, text2);
+        assertThat(postFileEntity.getStatusCodeValue()).isEqualTo(400);
+
+            // Попытка загрузить файл с неподходящим именем:
+        filename = "123";
+        postFileEntity = uploadFileResponseEntity(token, filename, text1);
+        assertThat(postFileEntity.getStatusCodeValue()).isEqualTo(400);
+
+            // Попытка загрузить пустой файл:
+        filename = "empty.txt";
+        String text3 = new String();
+        postFileEntity = uploadFileResponseEntity(token, filename, text3);
+        assertThat(postFileEntity.getStatusCodeValue()).isEqualTo(400);
+
+            // Удаление загруженного файла:
+        String deleteFilename = "test.txt";
+        ResponseEntity<String> deleteFileEntity = deleteFileResponseEntity(token, deleteFilename);
+        assertThat(deleteFileEntity.getStatusCodeValue()).isEqualTo(200);
+
+            // logout
+        ResponseEntity<String> logoutResponseEntity = logoutResponseEntity(token);
+        assertThat(logoutResponseEntity.getStatusCodeValue()).isEqualTo(200);
+    }
+
+
+    @Test
+    @Transactional
+    public void test_fileDownloadErrors() {
+            // login - получаем токен
+        String username = "evgenius@gmail.com";
+        String password = "password1";
+
+        String token = login(username, password);
+
+            // Успешная загрузка файла test.txt
+        String filename = "test.txt";
+        String text = "Text to be uploaded.";
+
+        ResponseEntity<String> postFileEntity = uploadFileResponseEntity(token, filename, text);
+        assertThat(postFileEntity.getStatusCodeValue()).isEqualTo(200);
+
+            // Попытка скачать не существующий файл:
+        filename = "somefile.jpg";
+        ResponseEntity<byte[]> getFileEntity = downloadFileResponseEntity(token, filename);
+        assertThat(getFileEntity.getStatusCodeValue()).isEqualTo(400);
+
+            // Попытка скачать файл с неподходящим именем:
+        String errorFilename = "123";
+        getFileEntity = downloadFileResponseEntity(token, errorFilename);
+        assertThat(getFileEntity.getStatusCodeValue()).isEqualTo(400);
+
+            // Удаление загруженного файла:
+        String deleteFilename = "test.txt";
+        ResponseEntity<String> deleteFileEntity = deleteFileResponseEntity(token, deleteFilename);
+        assertThat(deleteFileEntity.getStatusCodeValue()).isEqualTo(200);
+
+            // logout
+        ResponseEntity<String> logoutResponseEntity = logoutResponseEntity(token);
+        assertThat(logoutResponseEntity.getStatusCodeValue()).isEqualTo(200);
+    }
+
+    @Test
+    @Transactional
+    public void test_fileRenameErrors() {
+            // login - получаем токен
+        String username = "evgenius@gmail.com";
+        String password = "password1";
+
+        String token = login(username, password);
+
+            // Успешная загрузка файла test.txt
+        String filename = "test.txt";
+        String text = "Text to be uploaded.";
+
+        ResponseEntity<String> postFileEntity = uploadFileResponseEntity(token, filename, text);
+        assertThat(postFileEntity.getStatusCodeValue()).isEqualTo(200);
+
+            // Попытка переименовать не существующий файл:
+        filename = "somefile.jpg";
+        ResponseEntity<String> putFileEntity = renameFileResponseEntity(token, filename, "newfilename.jpg");
+        assertThat(putFileEntity.getStatusCodeValue()).isEqualTo(400);
+
+            // Попытка переименовать файл с неподходящим именем:
+        String errorFilename = "123";
+        putFileEntity = renameFileResponseEntity(token, errorFilename, "newfilename.jpg");
+        assertThat(putFileEntity.getStatusCodeValue()).isEqualTo(400);
+
+            // Попытка присвоить файлу не подходящее имя:
+        filename = "test.txt";
+        String errorNewFilename = "123";
+        putFileEntity = renameFileResponseEntity(token, filename, errorNewFilename);
+        assertThat(putFileEntity.getStatusCodeValue()).isEqualTo(400);
+
+            // Попытка присвоить файлу имя, которое уже занято:
+        filename = "test.txt";
+        putFileEntity = renameFileResponseEntity(token, filename, filename);
+        assertThat(putFileEntity.getStatusCodeValue()).isEqualTo(400);
+
+            // Удаление загруженного файла:
+        String deleteFilename = "test.txt";
+        ResponseEntity<String> deleteFileEntity = deleteFileResponseEntity(token, deleteFilename);
+        assertThat(deleteFileEntity.getStatusCodeValue()).isEqualTo(200);
+
+            // logout
+        ResponseEntity<String> logoutResponseEntity = logoutResponseEntity(token);
+        assertThat(logoutResponseEntity.getStatusCodeValue()).isEqualTo(200);
+    }
+
+    @Test
+    @Transactional
+    public void test_fileDeleteErrors() {
+            // login - получаем токен
+        String username = "evgenius@gmail.com";
+        String password = "password1";
+
+        String token = login(username, password);
+
+            // Успешная загрузка файла test.txt
+        String filename = "test.txt";
+        String text = "Text to be uploaded.";
+
+        ResponseEntity<String> postFileEntity = uploadFileResponseEntity(token, filename, text);
+        assertThat(postFileEntity.getStatusCodeValue()).isEqualTo(200);
+
+            // Попытка удалить не существующий файл:
+        filename = "somefile.jpg";
+        ResponseEntity<String> deleteFileEntity = deleteFileResponseEntity(token, filename);
+        assertThat(deleteFileEntity.getStatusCodeValue()).isEqualTo(400);
+
+            // Попытка удалить файл с неподходящим именем:
+        String errorFilename = "123";
+        deleteFileEntity = deleteFileResponseEntity(token, errorFilename);
+        assertThat(deleteFileEntity.getStatusCodeValue()).isEqualTo(400);
+
+            // Удаление загруженного файла:
+        String deleteFilename = "test.txt";
+        deleteFileEntity = deleteFileResponseEntity(token, deleteFilename);
+        assertThat(deleteFileEntity.getStatusCodeValue()).isEqualTo(200);
+
+            // logout
+        ResponseEntity<String> logoutResponseEntity = logoutResponseEntity(token);
+        assertThat(logoutResponseEntity.getStatusCodeValue()).isEqualTo(200);
     }
 
 
