@@ -2,8 +2,6 @@ package ru.netology.diploma.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.bind.DefaultValue;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import ru.netology.diploma.dao.StorageFile;
@@ -15,6 +13,7 @@ import ru.netology.diploma.service.CloudStorageService;
 
 import java.io.FileNotFoundException;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,7 +23,7 @@ public class CloudStorageServiceImpl implements CloudStorageService {
     private final CloudFileService cloudFileService;
 
     @Value("${storage.files.regex}")
-    private String filenameRegex = ".+\\.\\w+$";
+    private final String filenameRegex = ".+\\.\\w+$";
 
     @Autowired
     public CloudStorageServiceImpl(CloudDBService cloudDBService, CloudFileService cloudFileService) {
@@ -34,7 +33,7 @@ public class CloudStorageServiceImpl implements CloudStorageService {
 
     @Override
     public void inputDataValidation(MultipartFile file) throws InputDataException {
-        if (file == null || file.getOriginalFilename().isEmpty() || file.getSize() == 0)
+        if (file == null || Objects.requireNonNull(file.getOriginalFilename()).isEmpty() || file.getSize() == 0)
             throw new InputDataException("Incorrect file input data");
     }
 

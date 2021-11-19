@@ -1,7 +1,6 @@
 package ru.netology.diploma.service;
 
 import org.springframework.web.multipart.MultipartFile;
-import ru.netology.diploma.dao.StorageFile;
 import ru.netology.diploma.dto.response.FileFromListResponseDto;
 import ru.netology.diploma.pojo.exceptions.*;
 
